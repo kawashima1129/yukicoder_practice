@@ -27,11 +27,24 @@ def mouse_event(event, x, y, flags, param):
             xy2 = x, y
             cv2.rectangle(CompositeImg, (xy1[0], xy1[1]), (xy2[0], xy2[1]), (0, 255, 0), 3)
             cv2.imshow('title', CompositeImg)
+
                
     if event == cv2.EVENT_LBUTTONUP:
         if LBUTTONDOWN_FLAG == True:
             LBUTTONUP_FLAG = True #クリックした後，離すとフラグが立つ
+            saveTF()
 
+def saveTF():
+    global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG
+    Flag = input('保存するならyを入力，やり直す場合はn \n')
+    if Flag == 'y':
+        print('保存しました')
+    elif Flag == 'n':
+        cv2.imshow('title',img)
+        LBUTTONDOWN_FLAG = False
+        LBUTTONUP_FLAG = False
+        print('やり直してください')
+        
 
 def Adjust(xy1, xy2):
     _xy1 = np.array(xy1)
@@ -72,6 +85,7 @@ def Trimming(img, _xy1, _xy2):
         y_start = _xy2[1]
          
     dst = img[ y_start : y_start + abs(_xy1[1] - _xy2[1]), x_start : x_start + abs(_xy1[0] - _xy2[0]) ]
+    
     return dst   
 
          
