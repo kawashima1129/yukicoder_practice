@@ -7,15 +7,19 @@ Created on Tue Sep 26 15:59:32 2017
 
 import cv2
 import numpy as np
+import wx
+import sys
 
+SAVE_FLAG = False
 LBUTTONDOWN_FLAG = False
 LBUTTONUP_FLAG = False
+MOUSEMOVE_FLAG = False
 xy1 = [0, 0]
 xy2 = [0, 0]
 
 
 def mouse_event(event, x, y, flags, param):
-    global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, xy1, xy2
+    global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, MOUSEMOVE_FLAG, xy1, xy2
     CompositeImg = img.copy()
     
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -24,26 +28,34 @@ def mouse_event(event, x, y, flags, param):
     
     if event == cv2.EVENT_MOUSEMOVE:
         if LBUTTONDOWN_FLAG == True  and LBUTTONUP_FLAG == False:
+            MOUSEMOVE_FLAG = True
             xy2 = x, y
-            cv2.rectangle(CompositeImg, (xy1[0], xy1[1]), (xy2[0], xy2[1]), (0, 255, 0), 3)
+            cv2.rectangle(CompositeImg, (xy1[0], xy1[1]), (xy2[0], xy2[1]), (0, 255, 0), 2)
             cv2.imshow('title', CompositeImg)
 
                
     if event == cv2.EVENT_LBUTTONUP:
-        if LBUTTONDOWN_FLAG == True:
+        if LBUTTONDOWN_FLAG == True and MOUSEMOVE_FLAG == True:
             LBUTTONUP_FLAG = True #クリックした後，離すとフラグが立つ
             saveTF()
+        elif MOUSEMOVE_FLAG == False:
+            LBUTTONDOWN_FLAG = False    
 
 def saveTF():
-    global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG
-    Flag = input('保存するならyを入力，やり直す場合はn \n')
-    if Flag == 'y':
-        print('保存しました')
-    elif Flag == 'n':
+    global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, MOUSEMOVE_FLAG
+    app = wx.App()
+    dialog = wx.MessageBox(u'画像を保存しますか', u'ユーザーメッセージ', wx.YES_NO | wx.NO_DEFAULT)# メッセージボックスを表示
+
+    if dialog == 2:
+        global SAVE_FLAG
+        SAVE_FLAG = True
+    elif dialog == 8:
         cv2.imshow('title',img)
         LBUTTONDOWN_FLAG = False
         LBUTTONUP_FLAG = False
-        print('やり直してください')
+        MOUSEMOVE_FLAG = False
+    
+    app = None
         
 
 def Adjust(xy1, xy2):
@@ -91,15 +103,23 @@ def Trimming(img, _xy1, _xy2):
          
 if __name__ == '__main__':
     img = cv2.imread('lena.jpg')
+    if img is None:
+         app = wx.App()
+         dialog = wx.MessageBox(u'画像が読み込めません', u'ユーザーメッセージ')
+         app = None
+         sys.exit(0)
+         
+    cv2.namedWindow('title')
     cv2.imshow('title', img)
     cv2.setMouseCallback('title', mouse_event)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-    _xy1, _xy2 = Adjust(xy1, xy2)#枠がウィンドウを越えた場合に調整する
+            
+    while(True):
+        if cv2.waitKey(1) == 'q' or SAVE_FLAG == True:
+            break      
+
+    _xy1, _xy2 = Adjust(xy1, xy2) #枠がウィンドウを越えた場合に調整する
     dst = Trimming(img, _xy1, _xy2)
-    cv2.imshow('result', dst)
-    cv2.imwrite('dst.jpg', dst)
-    cv2.waitKey(0)    
+    #cv2.imshow('result', dst)
+    cv2.imwrite('dst.jpg', dst)  
     cv2.destroyAllWindows()
 
