@@ -20,6 +20,7 @@ xy2 = [0, 0]
 
 def mouse_event(event, x, y, flags, param):
     global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, MOUSEMOVE_FLAG, xy1, xy2
+    global CompositeImg
     CompositeImg = img.copy()
     
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -44,19 +45,18 @@ def mouse_event(event, x, y, flags, param):
 def saveTF():
     global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, MOUSEMOVE_FLAG
     app = wx.App()
-    dialog = wx.MessageBox(u'画像を保存しますか', u'ユーザーメッセージ', wx.YES_NO | wx.NO_DEFAULT)# メッセージボックスを表示
-
-    if dialog == 2:
+    dlg = wx.MessageDialog(None, 'ファイルを保存しますか.','Message Dialog',
+                           wx.YES_NO | wx.ICON_QUESTION)
+    result = dlg.ShowModal()
+    if result == wx.ID_YES:
         global SAVE_FLAG
         SAVE_FLAG = True
-    elif dialog == 8:
+    elif result == wx.ID_NO:
         cv2.imshow('title',img)
         LBUTTONDOWN_FLAG = False
         LBUTTONUP_FLAG = False
         MOUSEMOVE_FLAG = False
-    
-    app = None
-        
+       
 
 def Adjust(xy1, xy2):
     _xy1 = np.array(xy1)
@@ -102,24 +102,31 @@ def Trimming(img, _xy1, _xy2):
 
          
 if __name__ == '__main__':
-    img = cv2.imread('lena.jpg')
+    app = wx.App()
+    dialog = wx.FileDialog(None, u'ファイルを選択してください')
+    dialog.ShowModal()
+    file_path = dialog.GetPath()
+    img = cv2.imread(file_path)
+    
     if img is None:
-         app = wx.App()
          dialog = wx.MessageBox(u'画像が読み込めません', u'ユーザーメッセージ')
          app = None
          sys.exit(0)
          
     cv2.namedWindow('title')
-    cv2.imshow('title', img)
-    cv2.setMouseCallback('title', mouse_event)
-            
     while(True):
-        if cv2.waitKey(1) == 'q' or SAVE_FLAG == True:
+        cv2.setMouseCallback('title', mouse_event)
+        cv2.imshow('title', CompositeImg)
+        if cv2.waitKey(1) == ord('q') or SAVE_FLAG == True:
             break      
 
     _xy1, _xy2 = Adjust(xy1, xy2) #枠がウィンドウを越えた場合に調整する
     dst = Trimming(img, _xy1, _xy2)
-    #cv2.imshow('result', dst)
-    cv2.imwrite('dst.jpg', dst)  
+    
+    
+    result_file_path = file_path[0:file_path.rfind('.')] + '_result.jpg'
+    cv2.imwrite(result_file_path, dst)  
+    
     cv2.destroyAllWindows()
+    app = None
 
