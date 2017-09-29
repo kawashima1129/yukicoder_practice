@@ -1,0 +1,5 @@
+pip install pyinstaller
+対象のソースがあるディレクトリに移動して
+pyinstaller 対象ファイル.py --onefile --noconsole
+同ディレクトリのdistフォルダの中にexeファイルが作成されている．
+このexeファイル単独でプログラムを実行することができる．
