@@ -7,7 +7,7 @@ Created on Tue Sep 26 15:59:32 2017
 import cv2
 import numpy as np
 import wx
-import sys
+import ctypes
 
 def mouse_event(event, x, y, flags, param):
     global LBUTTONDOWN_FLAG, LBUTTONUP_FLAG, MOUSEMOVE_FLAG, xy1, xy2
@@ -117,10 +117,11 @@ if __name__ == '__main__':
         app = None     
         CompositeImg = img.copy() 
         cv2.namedWindow('title')
+        cv2.setMouseCallback('title', mouse_event) 
         while(True):
-            cv2.setMouseCallback('title', mouse_event)
+            handle = ctypes.windll.user32.FindWindowW(0,  'title')
             cv2.imshow('title', CompositeImg)
-            if cv2.waitKey(1) == ord('q') or SAVE_FLAG == True:
+            if cv2.waitKey(10) == ord('q') or SAVE_FLAG == True or handle == 0:
                 break
             
         if SAVE_FLAG == True:
